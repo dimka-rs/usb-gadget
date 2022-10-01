@@ -4,6 +4,9 @@
 
 https://docs.armbian.com/Developer-Guide_Build-Preparation/
 
+Must reconfigure, rebuild and install kernel.
+Reconfiguration is required to support USB GADGET and CONFIGFS
+
 ## Gadget docs
 
 * https://www.kernel.org/doc/Documentation/usb/gadget_configfs.txt
