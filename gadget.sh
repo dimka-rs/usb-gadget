@@ -3,7 +3,7 @@
 [ $(whoami) != "root" ] && echo "Please run as root" && exit 1
 
 CONFIGFS=/configfs
-
+IMAGE=/tmp/lun0.img
 
 start() {
 modprobe libcomposite
@@ -13,13 +13,16 @@ mkdir $CONFIGFS/usb_gadget/g1
 cd $CONFIGFS/usb_gadget/g1
 
 
-dd bs=1M count=16 if=/dev/zero of=/tmp/lun0.img # 16MB
-dd bs=1M count=16 if=/dev/zero of=/tmp/lun1.img # 16MB
+## Prepare FAT32 Disk
+dd bs=1M count=128 if=/dev/zero of=$IMAGE
+mformat -F -i $IMAGE ::
+echo "Test" > /tmp/example.txt
+mcopy -i $IMAGE /tmp/example.txt ::
+
+
 mkdir configs/c.1
 mkdir functions/mass_storage.0
-echo /tmp/lun0.img > functions/mass_storage.0/lun.0/file
-mkdir functions/mass_storage.0/lun.1
-echo /tmp/lun1.img > functions/mass_storage.0/lun.1/file
+echo $IMAGE > functions/mass_storage.0/lun.0/file
 mkdir strings/0x409
 mkdir configs/c.1/strings/0x409
  

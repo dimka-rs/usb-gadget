@@ -15,3 +15,6 @@ https://docs.armbian.com/Developer-Guide_Build-Preparation/
 
 Remember to use armbian-config to enable usbhost0 in "System -> Hardware"
 
+## Additional packages
+
+* mtools
