@@ -3,14 +3,15 @@
 [ $(whoami) != "root" ] && echo "Please run as root" && exit 1
 
 CONFIGFS=/configfs
+GADGET=$CONFIGFS/usb_gadget/g1
 IMAGE=/tmp/lun0.img
 
 start() {
 modprobe libcomposite
 mount none $CONFIGFS -t configfs
  
-mkdir $CONFIGFS/usb_gadget/g1
-cd $CONFIGFS/usb_gadget/g1
+mkdir $GADGET
+cd $GADGET
 
 
 ## Prepare FAT32 Disk
@@ -42,10 +43,16 @@ echo `ls -1 /sys/class/udc/` > UDC
 
 stop()
 {
-echo "" > $CONFIGFS/usb_gadget/g1/UDC
-rm -rf $CONFIGFS/usb_gadget/g1
-umount $CONFIGFS
-modprobe -r libcomposite
+echo "" > $GADGET/UDC
+rm	$GADGET/configs/c.1/mass_storage.0
+rmdir 	$GADGET/configs/c.1/strings/0x409
+rmdir	$GADGET/configs/c.1
+rmdir --ignore-fail-on-non-empty $GADGET/functions/mass_storage.0
+rmdir	$GADGET/strings/0x409
+
+#rm -rf $CONFIGFS/usb_gadget/g1
+#umount $CONFIGFS
+#modprobe -r libcomposite
 
 }
 
