@@ -18,3 +18,18 @@ Remember to use armbian-config to enable usbhost0 in "System -> Hardware"
 ## Additional packages
 
 * mtools
+
+## Monitoring files
+
+### mtools
+
+        mdir -i /tmp/lun0.img ::
+
+This way we can list files and check for new ones. Listing files in a loop may be a valid approach.
+
+### loop device + inotify
+
+        sudo mount -o loop,offset=0,ro /tmp/lun0.img /mnt/lun0/
+
+This way we can mount image, but it will not update us on new files. Maybe remount in a loop?
+
