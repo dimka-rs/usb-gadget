@@ -11,3 +11,7 @@ https://docs.armbian.com/Developer-Guide_Build-Preparation/
 * https://wiki.tizen.org/USB/Linux_USB_Layers/Configfs_Composite_Gadget/Usage_eq._to_g_mass_storage.ko
 * https://docs.kernel.org/usb/gadget_configfs.html
 
+## armbian-config
+
+Remember to use armbian-config to enable usbhost0 in "System -> Hardware"
+
