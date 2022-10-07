@@ -26,9 +26,10 @@ Remember to use armbian-config to enable usbhost0 in "System -> Hardware"
 
 ### mtools
 
-        mdir -i /tmp/lun0.img ::
+        mdir -b -i /tmp/lun0.img ::
 
 This way we can list files and check for new ones. Listing files in a loop may be a valid approach.
+**-b** flag shows long file names without extra details
 
 ### loop device + inotify
 
