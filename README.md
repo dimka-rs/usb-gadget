@@ -21,6 +21,7 @@ Remember to use armbian-config to enable usbhost0 in "System -> Hardware"
 ## Additional packages
 
 * mtools
+* cifs-utils
 
 ## Monitoring files
 
