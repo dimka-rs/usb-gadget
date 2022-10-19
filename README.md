@@ -4,6 +4,9 @@
 
 * Download image: https://www.armbian.com/orange-pi-zero/
 * Write image to SD. Optional: resize root partition.
+* Boot up and configure root and user passwords
+    * Default login: root/1234
+    * My user account: user/Armbian
 * Download and install debs from shared folder: https://disk.yandex.ru/d/vlGMVMleu1ndrw
 * Install packages
     * mtools
