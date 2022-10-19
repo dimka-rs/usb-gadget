@@ -1,5 +1,11 @@
 # usb-gadget
 
+## Download
+
+Download image: https://www.armbian.com/orange-pi-zero/
+My shared folder: https://disk.yandex.ru/d/vlGMVMleu1ndrw
+
+
 ## Armbian docs
 
 https://docs.armbian.com/Developer-Guide_Build-Preparation/
