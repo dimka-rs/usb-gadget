@@ -3,6 +3,7 @@
 ## Download
 
 Download image: https://www.armbian.com/orange-pi-zero/
+
 My shared folder: https://disk.yandex.ru/d/vlGMVMleu1ndrw
 
 
@@ -11,6 +12,7 @@ My shared folder: https://disk.yandex.ru/d/vlGMVMleu1ndrw
 https://docs.armbian.com/Developer-Guide_Build-Preparation/
 
 Must reconfigure, rebuild and install kernel.
+
 Reconfiguration is required to support USB GADGET and CONFIGFS
 
 ## Gadget docs
