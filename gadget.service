@@ -1,0 +1,9 @@
+[Unit]
+Description=My USB gadget service
+
+[Service]
+ExecStart=/usr/bin/gadget.sh
+
+[Install]
+WantedBy=multi-user.target
+

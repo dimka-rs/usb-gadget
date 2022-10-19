@@ -16,11 +16,16 @@
     * sudo /sbin/rmmod g_serial
     * sudo vim /etc/modules, comment or remove g_serial
 * Use armbian-config to enable usbhost0 in "System -> Hardware"
-* Copy scripts from repo to user home folder
-* Change user and password in samba.sh
-* Run
-    * sudo gadget.sh start
-    * sudo samba start
+* Copy scripts from repo to FS
+    * gadget.service -> /lib/systemd/system/
+    * gadget.sh -> /usr/bin/
+    * gadget.env -> /etc/
+* Change user and password in /etc/gadget.env
+* Start service
+    * sudo systemctl daemon-reload
+    * sudo systemctl enable gadget.service
+    * sudo systemctl start gadget.service
+    * sudo systemctl status gadget.service
 
 ## Armbian docs
 
