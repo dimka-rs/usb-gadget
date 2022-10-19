@@ -1,10 +1,16 @@
 # usb-gadget
 
-## Download
+## How to prepare SD card
 
-Download image: https://www.armbian.com/orange-pi-zero/
-
-My shared folder: https://disk.yandex.ru/d/vlGMVMleu1ndrw
+* Download image: https://www.armbian.com/orange-pi-zero/
+* Write image to SD. Optional: resize root partition.
+* Download and install debs from shared folder: https://disk.yandex.ru/d/vlGMVMleu1ndrw
+* Install packages
+    * mtools
+    * cifs-utils
+* Disable USB uart gadget
+* Use armbian-config to enable usbhost0 in "System -> Hardware"
+* Copy scripts from repo to user folder
 
 
 ## Armbian docs
@@ -22,14 +28,7 @@ Reconfiguration is required to support USB GADGET and CONFIGFS
 * https://wiki.tizen.org/USB/Linux_USB_Layers/Configfs_Composite_Gadget/Usage_eq._to_g_mass_storage.ko
 * https://docs.kernel.org/usb/gadget_configfs.html
 
-## armbian-config
 
-Remember to use armbian-config to enable usbhost0 in "System -> Hardware"
-
-## Additional packages
-
-* mtools
-* cifs-utils
 
 ## Monitoring files
 
