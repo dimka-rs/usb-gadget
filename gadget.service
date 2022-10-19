@@ -1,9 +1,10 @@
 [Unit]
 Description=My USB gadget service
+Wants=network-online.target
+After=network.target network-online.target
 
 [Service]
 ExecStart=/usr/bin/gadget.sh
 
 [Install]
 WantedBy=multi-user.target
-

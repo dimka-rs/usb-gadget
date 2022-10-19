@@ -52,7 +52,16 @@ configure_samba()
 	mkdir -p $SMBMNT
 	echo "username=$SMBUSER" > $SMBCREDS
 	echo "password=$SMBPASS" >> $SMBCREDS
-	mount -t cifs -o rw,vers=3.0,credentials=$SMBCREDS //$SMBSRV $SMBMNT
+	ret=1
+	while true
+	do
+		if [ "$ret" -ne 0 ]
+		then
+			sleep 5
+			mount -v -t cifs -o rw,vers=3.0,credentials=$SMBCREDS //$SMBSRV $SMBMNT
+			ret=$?
+		fi
+	done
 }
 
 sync_files()
@@ -60,8 +69,8 @@ sync_files()
 	SYNCMNT=/mnt/lun0/
 
 	mkdir -p $SYNCMNT
-	mount -o loop,offset=0,ro $IMAGE $SYNCMNT
-	rsync -aq $SYNCMNT $SMBMNT
+	mount -v -o loop,offset=0,ro $IMAGE $SYNCMNT
+	rsync -av $SYNCMNT $SMBMNT
 	umount $SYNCMNT
 }
 
