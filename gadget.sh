@@ -41,7 +41,7 @@ configure_gadget()
 	echo 120 > configs/c.1/MaxPower
 	ln -s functions/mass_storage.0 configs/c.1
 
-	logger "Using `ls -1 /sys/class/udc/`"
+	echo "Using `ls -1 /sys/class/udc/`"
 	echo `ls -1 /sys/class/udc/` > UDC
 }
 
@@ -57,11 +57,14 @@ configure_samba()
 	do
 		if [ "$ret" -ne 0 ]
 		then
-			sleep 5
+			sleep 10
 			mount -v -t cifs -o rw,vers=3.0,credentials=$SMBCREDS //$SMBSRV $SMBMNT
 			ret=$?
+		else
+			break
 		fi
 	done
+	echo "Samba mount OK"
 }
 
 sync_files()
@@ -90,6 +93,7 @@ configure_samba
 
 while true
 do
+	echo sync_files
 	sync_files
 	sleep 10
 done
