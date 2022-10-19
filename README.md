@@ -7,14 +7,20 @@
 * Boot up and configure root and user passwords
     * Default login: root/1234
     * My user account: user/Armbian
-* Download and install debs from shared folder: https://disk.yandex.ru/d/vlGMVMleu1ndrw
 * Install packages
-    * mtools
-    * cifs-utils
+    * sudo apt update
+    * sudo apt upgrade
+    * sudo apt install mtools cifs-utils
+* Download and install debs from shared folder: https://disk.yandex.ru/d/vlGMVMleu1ndrw
 * Disable USB uart gadget
+    * sudo /sbin/rmmod g_serial
+    * sudo vim /etc/modules, comment or remove g_serial
 * Use armbian-config to enable usbhost0 in "System -> Hardware"
-* Copy scripts from repo to user folder
-
+* Copy scripts from repo to user home folder
+* Change user and password in samba.sh
+* Run
+    * sudo gadget.sh start
+    * sudo samba start
 
 ## Armbian docs
 

@@ -8,8 +8,9 @@ IMAGE=/tmp/lun0.img
 
 start() {
 modprobe libcomposite
+mkdir -p $CONFIGFS
 mount none $CONFIGFS -t configfs
- 
+
 mkdir $GADGET
 cd $GADGET
 
