@@ -1,10 +1,24 @@
 #!/bin/bash
 
-ENVFILE=/etc/gadget.env
+### Configuration Variables ###
 
-## Private
-IMAGE=/tmp/lun0.img
+## Settings file
+ENVFILE=/etc/gadget.env
+## Default settings
+ENVFILE_DEF=/etc/gadget.env.default
+## New settings file from user
+ENVFILE_NEW=gadget.env
+
+## Path to image file
+IMAGE_FILE=/tmp/lun0.img
+
+## Image size in MB
+IMAGE_SIZE=2048
+
+## Path to mount samba share
 SMBMNT=/mnt/samba
+
+### Code ###
 
 configure_gadget()
 {
@@ -18,17 +32,16 @@ configure_gadget()
 	mkdir $GADGET
 	cd $GADGET
 
-
 	## Prepare FAT32 Disk
-	dd bs=1M count=128 if=/dev/zero of=$IMAGE
-	mformat -F -i $IMAGE ::
-	echo "Test" > /tmp/example.txt
-	mcopy -i $IMAGE /tmp/example.txt ::
+	dd bs=1M count=$IMAGE_SIZE if=/dev/zero of=$IMAGE_FILE
+	mformat -F -i $IMAGE_FILE ::
+	## Copy default settings
+	mcopy -i $IMAGE_FILE $ENVFILE_DEF ::
 
 	## Configure mass storage gadget
 	mkdir configs/c.1
 	mkdir functions/mass_storage.0
-	echo $IMAGE > functions/mass_storage.0/lun.0/file
+	echo $IMAGE_FILE > functions/mass_storage.0/lun.0/file
 	mkdir strings/0x409
 	mkdir configs/c.1/strings/0x409
 	echo 0xa4a2 > idProduct
@@ -71,19 +84,38 @@ sync_files()
 {
 	SYNCMNT=/mnt/lun0/
 
+	## mount samba share
 	mkdir -p $SYNCMNT
-	mount -v -o loop,offset=0,ro $IMAGE $SYNCMNT
+	mount -v -o loop,offset=0,ro $IMAGE_FILE $SYNCMNT
+
+	## sync files
 	rsync -av $SYNCMNT $SMBMNT
+
+	## test if new settings present and store them
+	if [ -f "$SYNCMNT/$ENVFILE_NEW" ]; then
+		cp $SYNCMNT/$ENVFILE_NEW $ENVFILE
+	fi
+
+	## log free space before unmounting image
+	df -h > $SMBMNT/df.log
+
+	## unmount image
 	umount $SYNCMNT
+
+	## write logs
+	dmesg > $SMBMNT/dmesg.log
 }
 
 
 ## START
 
+## Root required
 [ $(whoami) != "root" ] && echo "Please run as root" && exit 1
 
-## check smb creds
+## import settings
 source $ENVFILE
+
+## check smb creds
 [ -z "$SMBUSER" ] && echo "SMBUSER not set in $ENVFILE" && exit 1
 [ -z "$SMBPASS" ] && echo "SMBPASS not set in $ENVFILE" && exit 1
 [ -z "$SMBSRV"  ] && echo "SMBSRV  not set in $ENVFILE" && exit 1
