@@ -4,19 +4,32 @@
 
 ## Settings file
 ENVFILE=/etc/gadget.env
+
 ## Default settings
-ENVFILE_DEF=/etc/gadget.env.default
+ENVFILE_DEF=/etc/gadget.config.default.txt
+
 ## New settings file from user
-ENVFILE_NEW=gadget.env
+ENVFILE_NEW=gadget.config.txt
+
+## Files to report device status locally
+NETSTATUS_LOCAL_FILE=/tmp/gadget.network.txt
+DMESG_LOCAL_FILE=/tmp/gadget.dmesg.txt
+
+## Files to report device status in shared folder
+DFSTATUS_FILE=gadget.df.txt
+DMESGSTATUS_FILE=gadget.dmesg.txt
 
 ## Path to image file
-IMAGE_FILE=/tmp/lun0.img
+IMAGE_FILE=/root/gadget.lun0.img
 
 ## Image size in MB
 IMAGE_SIZE=2048
 
 ## Path to mount samba share
-SMBMNT=/mnt/samba
+SMBMNT=/mnt/gadget.samba
+
+## Update file
+UPDATE_FILE=gadget.update.deb
 
 ### Code ###
 
@@ -37,6 +50,13 @@ configure_gadget()
 	mformat -F -i $IMAGE_FILE ::
 	## Copy default settings
 	mcopy -i $IMAGE_FILE $ENVFILE_DEF ::
+	## Report network status
+	ip addr > $NETSTATUS_LOCAL_FILE
+	ip route >> $NETSTATUS_LOCAL_FILE
+	mcopy -i $IMAGE_FILE $NETSTATUS_LOCAL_FILE ::
+	## Report logs status
+	dmesg > $DMESG_LOCAL_FILE
+	mcopy -i $IMAGE_FILE $DMESG_LOCAL_FILE ::
 
 	## Configure mass storage gadget
 	mkdir configs/c.1
@@ -60,7 +80,7 @@ configure_gadget()
 
 configure_samba()
 {
-	SMBCREDS=/tmp/smbcreds
+	SMBCREDS=/tmp/gadget.smbcreds
 
 	mkdir -p $SMBMNT
 	echo "username=$SMBUSER" > $SMBCREDS
@@ -82,9 +102,9 @@ configure_samba()
 
 sync_files()
 {
-	SYNCMNT=/mnt/lun0/
+	SYNCMNT=/mnt/gadget.lun0/
 
-	## mount samba share
+	## mount image
 	mkdir -p $SYNCMNT
 	mount -v -o loop,offset=0,ro $IMAGE_FILE $SYNCMNT
 
@@ -93,17 +113,29 @@ sync_files()
 
 	## test if new settings present and store them
 	if [ -f "$SYNCMNT/$ENVFILE_NEW" ]; then
+		echo "Updating config from user!"
 		cp $SYNCMNT/$ENVFILE_NEW $ENVFILE
+		sync $ENVFILE
+	fi
+
+	## test if update is available
+	if [ -f "$SYNCMNT/$UPDATE_FILE" ]; then
+		echo "Updating package!"
+		cp $SYNCMNT/$UPDATE_FILE /tmp/$UPDATE_FILE
+		dpkg -i $UPDATE_FILE
+		sync
+		sleep 5
+		reboot
 	fi
 
 	## log free space before unmounting image
-	df -h > $SMBMNT/df.log
+	df -h > $SMBMNT/$DFSTATUS_FILE
 
 	## unmount image
 	umount $SYNCMNT
 
 	## write logs
-	dmesg > $SMBMNT/dmesg.log
+	dmesg > $SMBMNT/$DMESG_STATUS_FILE
 }
 
 
