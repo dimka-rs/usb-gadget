@@ -46,7 +46,9 @@ configure_gadget()
 	cd $GADGET
 
 	## Prepare FAT32 Disk
-	dd bs=1M count=$IMAGE_SIZE if=/dev/zero of=$IMAGE_FILE
+	if [ ! -f "$IMAGE_FILE" ]; then
+		dd bs=1M count=$IMAGE_SIZE if=/dev/zero of=$IMAGE_FILE
+	fi
 	mformat -F -i $IMAGE_FILE ::
 	## Copy default settings
 	mcopy -i $IMAGE_FILE $ENVFILE_DEF ::
