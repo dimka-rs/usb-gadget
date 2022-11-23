@@ -8,6 +8,9 @@ ENVFILE=/etc/gadget.env
 ## Default settings
 ENVFILE_DEF=/etc/gadget.config.default.txt
 
+## Current config
+ENVFILE_CUR=gadget.config.current.txt
+
 ## New settings file from user
 ENVFILE_NEW=gadget.config.txt
 
@@ -50,8 +53,12 @@ configure_gadget()
 		dd bs=1M count=$IMAGE_SIZE if=/dev/zero of=$IMAGE_FILE
 	fi
 	mformat -F -i $IMAGE_FILE ::
-	## Copy default settings
-	mcopy -i $IMAGE_FILE $ENVFILE_DEF ::
+	## Copy current or default settings
+	if [ -f "$ENVFILE" ]; then
+		mcopy -i $ENVFILE $ENVFILE_CUR ::
+	else
+		mcopy -i $IMAGE_FILE $ENVFILE_DEF ::
+	fi
 	## Report network status
 	ip addr > $NETSTATUS_LOCAL_FILE
 	ip route >> $NETSTATUS_LOCAL_FILE
@@ -118,6 +125,8 @@ sync_files()
 		echo "Updating config from user!"
 		cp $SYNCMNT/$ENVFILE_NEW $ENVFILE
 		sync $ENVFILE
+		sleep 10
+		reboot
 	fi
 
 	## test if update is available
@@ -126,7 +135,7 @@ sync_files()
 		cp $SYNCMNT/$UPDATE_FILE /tmp/$UPDATE_FILE
 		dpkg -i $UPDATE_FILE
 		sync
-		sleep 5
+		sleep 10
 		reboot
 	fi
 
