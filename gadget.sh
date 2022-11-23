@@ -19,14 +19,22 @@ NETSTATUS_LOCAL_FILE=/tmp/gadget.network.txt
 DMESG_LOCAL_FILE=/tmp/gadget.dmesg.txt
 
 ## Files to report device status in shared folder
-DFSTATUS_FILE=gadget.df.txt
-DMESGSTATUS_FILE=gadget.dmesg.txt
+DF_STATUS_FILE=gadget.df.txt
+DMESG_STATUS_FILE=gadget.dmesg.txt
 
 ## Path to image file
 IMAGE_FILE=/root/gadget.lun0.img
 
 ## Image size in MB
 IMAGE_SIZE=2048
+
+## in case of smb failure
+FAIL_IMAGE_FILE=/tmp/gadget.lun0.img
+FAIL_IMAGE_SIZE=128
+SMB_STATUS=fail
+SMB_FAIL_CNT=10
+SMB_FAIL_DELAY=10
+SMB_FAIL_DIR=SMB_ERROR
 
 ## Path to mount samba share
 SMBMNT=/mnt/gadget.samba
@@ -55,9 +63,13 @@ configure_gadget()
 	mformat -F -i $IMAGE_FILE ::
 	## Copy current or default settings
 	if [ -f "$ENVFILE" ]; then
-		mcopy -i $ENVFILE $ENVFILE_CUR ::
+		mcopy -i $IMAGE_FILE $ENVFILE ::$ENVFILE_CUR
 	else
 		mcopy -i $IMAGE_FILE $ENVFILE_DEF ::
+	fi
+	## report error by creating dir
+	if [ "$SMB_STATUS" == "fail" ]; then
+		mmd -i $IMAGE_FILE ::$SMB_FAIL_DIR
 	fi
 	## Report network status
 	ip addr > $NETSTATUS_LOCAL_FILE
@@ -83,6 +95,7 @@ configure_gadget()
 	echo 120 > configs/c.1/MaxPower
 	ln -s functions/mass_storage.0 configs/c.1
 
+	echo "" > UDC
 	echo "Using `ls -1 /sys/class/udc/`"
 	echo `ls -1 /sys/class/udc/` > UDC
 }
@@ -95,22 +108,33 @@ configure_samba()
 	echo "username=$SMBUSER" > $SMBCREDS
 	echo "password=$SMBPASS" >> $SMBCREDS
 	ret=1
+	cnt=0
 	while true
 	do
 		if [ "$ret" -ne 0 ]
 		then
-			sleep 10
+			sleep $SMB_FAIL_DELAY
 			mount -v -t cifs -o rw,vers=3.0,credentials=$SMBCREDS //$SMBSRV $SMBMNT
 			ret=$?
+			cnt=$(( cnt + 1 ))
+			if [ $cnt -ge $SMB_FAIL_CNT ]; then
+				echo "Samba mount FAIL"
+				break
+			fi
 		else
+			SMB_STATUS="ok"
+			echo "Samba mount OK"
 			break
 		fi
 	done
-	echo "Samba mount OK"
 }
 
 sync_files()
 {
+	if [ "$SMB_STATUS" == "fail" ]; then
+		return
+	fi
+
 	SYNCMNT=/mnt/gadget.lun0/
 
 	## mount image
@@ -140,7 +164,7 @@ sync_files()
 	fi
 
 	## log free space before unmounting image
-	df -h > $SMBMNT/$DFSTATUS_FILE
+	df -h > $SMBMNT/$DF_STATUS_FILE
 
 	## unmount image
 	umount $SYNCMNT
@@ -163,8 +187,15 @@ source $ENVFILE
 [ -z "$SMBPASS" ] && echo "SMBPASS not set in $ENVFILE" && exit 1
 [ -z "$SMBSRV"  ] && echo "SMBSRV  not set in $ENVFILE" && exit 1
 
-configure_gadget
 configure_samba
+
+## use another image in case of smb failure
+if [ "$SMB_STATUS" == "fail" ]; then
+	IMAGE_FILE=$FAIL_IMAGE_FILE
+	IMAGE_SIZE=$FAIL_IMAGE_SIZE
+fi
+
+configure_gadget
 
 while true
 do
