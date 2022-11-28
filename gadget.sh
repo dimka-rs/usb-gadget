@@ -28,6 +28,9 @@ IMAGE_FILE=/root/gadget.lun0.img
 ## Image size in MB
 IMAGE_SIZE=2048
 
+## How often check for new files, seconds
+SYNC_INTERVAL=10
+
 ## in case of smb failure
 FAIL_IMAGE_FILE=/tmp/gadget.lun0.img
 FAIL_IMAGE_SIZE=128
@@ -131,21 +134,23 @@ configure_samba()
 
 sync_files()
 {
-	if [ "$SMB_STATUS" == "fail" ]; then
-		return
-	fi
-
 	SYNCMNT=/mnt/gadget.lun0/
 
 	## mount image
 	mkdir -p $SYNCMNT
 	mount -v -o loop,offset=0,ro $IMAGE_FILE $SYNCMNT
 
-	## sync files
-	rsync -av $SYNCMNT $SMBMNT
+	## sync files and update logs if share is mounted
+	if [ "$SMB_STATUS" == "ok" ]; then
+		rsync -av $SYNCMNT $SMBMNT
+		## log free space
+		df -h > $SMBMNT/$DF_STATUS_FILE
+		## write logs
+		dmesg > $SMBMNT/$DMESG_STATUS_FILE
+	fi
 
 	## test if new settings present and store them
-	if [ -f "$SYNCMNT/$ENVFILE_NEW" ]; then
+	if [ -s "$SYNCMNT/$ENVFILE_NEW" ]; then
 		echo "Updating config from user!"
 		cp $SYNCMNT/$ENVFILE_NEW $ENVFILE
 		sync $ENVFILE
@@ -154,23 +159,17 @@ sync_files()
 	fi
 
 	## test if update is available
-	if [ -f "$SYNCMNT/$UPDATE_FILE" ]; then
+	if [ -s "$SYNCMNT/$UPDATE_FILE" ]; then
 		echo "Updating package!"
 		cp $SYNCMNT/$UPDATE_FILE /tmp/$UPDATE_FILE
-		dpkg -i $UPDATE_FILE
+		dpkg -i /tmp/$UPDATE_FILE
 		sync
 		sleep 10
 		reboot
 	fi
 
-	## log free space before unmounting image
-	df -h > $SMBMNT/$DF_STATUS_FILE
-
 	## unmount image
 	umount $SYNCMNT
-
-	## write logs
-	dmesg > $SMBMNT/$DMESG_STATUS_FILE
 }
 
 
@@ -180,14 +179,19 @@ sync_files()
 [ $(whoami) != "root" ] && echo "Please run as root" && exit 1
 
 ## import settings
-source $ENVFILE
+if [ -f $ENVFILE ]; then
+	source $ENVFILE
+fi
 
 ## check smb creds
-[ -z "$SMBUSER" ] && echo "SMBUSER not set in $ENVFILE" && exit 1
-[ -z "$SMBPASS" ] && echo "SMBPASS not set in $ENVFILE" && exit 1
-[ -z "$SMBSRV"  ] && echo "SMBSRV  not set in $ENVFILE" && exit 1
-
-configure_samba
+if [ -n "$SMBUSER" ] && [ -n "$SMBPASS" ] && [ -n "$SMBSRV"  ]; then
+	configure_samba
+else
+	echo "Wrong samba configuration"
+	echo "SMBUSER=$SMBUSER"
+	echo "SMBPASS=$SMBPASS"
+	echo "SMBSRV=$SMBSRV"
+fi
 
 ## use another image in case of smb failure
 if [ "$SMB_STATUS" == "fail" ]; then
@@ -199,8 +203,7 @@ configure_gadget
 
 while true
 do
-	echo sync_files
 	sync_files
-	sleep 10
+	sleep $SYNC_INTERVAL
 done
 
