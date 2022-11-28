@@ -45,6 +45,10 @@ SMBMNT=/mnt/gadget.samba
 ## Update file
 UPDATE_FILE=gadget.update.deb
 
+##  LEDS
+LED_GREEN=/sys/class/leds/orangepi\:green\:pwr
+LED_RED=/sys/class/leds/orangepi\:red\:status
+
 ### Code ###
 
 configure_gadget()
@@ -151,6 +155,8 @@ sync_files()
 
 	## test if new settings present and store them
 	if [ -s "$SYNCMNT/$ENVFILE_NEW" ]; then
+		## indicate update
+		echo default-on > $LED_RED/trigger
 		echo "Updating config from user!"
 		cp $SYNCMNT/$ENVFILE_NEW $ENVFILE
 		sync $ENVFILE
@@ -160,6 +166,8 @@ sync_files()
 
 	## test if update is available
 	if [ -s "$SYNCMNT/$UPDATE_FILE" ]; then
+		## indicate update
+		echo default-on > $LED_RED/trigger
 		echo "Updating package!"
 		cp $SYNCMNT/$UPDATE_FILE /tmp/$UPDATE_FILE
 		dpkg -i /tmp/$UPDATE_FILE
@@ -177,6 +185,10 @@ sync_files()
 
 ## Root required
 [ $(whoami) != "root" ] && echo "Please run as root" && exit 1
+
+## Default LEDs state
+echo default-on > $LED_GREEN/trigger
+echo none > $LED_RED/trigger
 
 ## import settings
 if [ -f $ENVFILE ]; then
