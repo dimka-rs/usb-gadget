@@ -17,6 +17,7 @@ ENVFILE_NEW=gadget.config.txt
 ## Files to report device status locally
 NETSTATUS_LOCAL_FILE=/tmp/gadget.network.txt
 DMESG_LOCAL_FILE=/tmp/gadget.dmesg.txt
+JOURNAL_LOCAL_FILE=/tmp/gadget.journal.txt
 
 ## Files to report device status in shared folder
 DF_STATUS_FILE=gadget.df.txt
@@ -85,6 +86,9 @@ configure_gadget()
 	## Report logs status
 	dmesg > $DMESG_LOCAL_FILE
 	mcopy -i $IMAGE_FILE $DMESG_LOCAL_FILE ::
+	## Report journal
+	journalctl -u gadget > $JOURNAL_LOCAL_FILE
+	mcopy -i $IMAGE_FILE $JOURNAL_LOCAL_FILE ::
 
 	## Configure mass storage gadget
 	mkdir configs/c.1
@@ -109,11 +113,7 @@ configure_gadget()
 
 configure_samba()
 {
-	SMBCREDS=/tmp/gadget.smbcreds
-
 	mkdir -p $SMBMNT
-	echo "username=$SMBUSER" > $SMBCREDS
-	echo "password=$SMBPASS" >> $SMBCREDS
 	ret=1
 	cnt=0
 	while true
@@ -121,7 +121,8 @@ configure_samba()
 		if [ "$ret" -ne 0 ]
 		then
 			sleep $SMB_FAIL_DELAY
-			mount -v -t cifs -o rw,vers=3.0,credentials=$SMBCREDS //$SMBSRV $SMBMNT
+			## note: 'guest' arg should work, but it does not
+			mount -v -t cifs -o rw,vers=3.0,user=$SMBUSER,pass=$SMBPASS //$SMBSRV $SMBMNT
 			ret=$?
 			cnt=$(( cnt + 1 ))
 			if [ $cnt -ge $SMB_FAIL_CNT ]; then
@@ -196,7 +197,7 @@ if [ -f $ENVFILE ]; then
 fi
 
 ## check smb creds
-if [ -n "$SMBUSER" ] && [ -n "$SMBPASS" ] && [ -n "$SMBSRV"  ]; then
+if [ -n "$SMBSRV"  ]; then
 	configure_samba
 else
 	echo "Wrong samba configuration"
