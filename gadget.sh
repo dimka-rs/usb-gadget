@@ -52,6 +52,25 @@ LED_RED=/sys/class/leds/orangepi\:red\:status
 
 ### Code ###
 
+configure_network()
+{
+	CONNECTION_NAME=`nmcli -f GENERAL.CONNECTION device show eth0|sed -e 's/^.*:\ *//'`
+	if [ -z "$CONNECTION_NAME" ]; then
+		echo "Failed to get connection name for eth0!"
+		return
+	fi
+
+	if [ -z "$IP_ADDRESS" ] || [ -z "$IP_MASK" ] || [ -z "$IP_GATEWAY" ] || [ -z "$IP_DNS" ]; then
+		## DHCP
+		nmcli con modify "$CONNECTION_NAME" ipv4.method auto
+	else
+		## MANUAL
+		nmcli con modify "$CONNECTION_NAME" ipv4.method manual
+		nmcli con modify "$CONNECTION_NAME" ipv4.addresses "$IP_ADDRESS/$IP_MASK"
+		nmcli con modify "$CONNECTION_NAME" ipv4.dns "$IP_DNS"
+	fi
+}
+
 configure_gadget()
 {
 	CONFIGFS=/configfs
@@ -212,6 +231,7 @@ if [ "$SMB_STATUS" == "fail" ]; then
 	IMAGE_SIZE=$FAIL_IMAGE_SIZE
 fi
 
+configure_network
 configure_gadget
 
 while true
